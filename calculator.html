@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WCA Average Tracker & Target Calculator</title>
+    <style>
+        :root {
+            /* Light Mode Variables */
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --primary-color: #3b82f6;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --input-bg: #ffffff;
+            --input-border: #e5e7eb;
+            --results-bg: #f8fafc;
+            --divider-color: #e2e8f0;
+            --btn-hover: #f3f4f6;
+            
+            /* Stat Colors */
+            --bpa-color: #10b981;
+            --wpa-color: #ef4444;
+            --target-color: #8b5cf6;
+        }
+
+        /* Dark Mode Override */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #121212;
+                --card-bg: #1e1e1e;
+                --text-main: #f3f4f6;
+                --text-muted: #9ca3af;
+                --input-bg: #2d2d2d;
+                --input-border: #4b5563;
+                --results-bg: #252525;
+                --divider-color: #374151;
+                --btn-hover: #374151;
+
+                /* Slightly brighter stat colors for dark background */
+                --bpa-color: #34d399; 
+                --wpa-color: #f87171; 
+                --target-color: #a78bfa; 
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .calculator-card {
+            background: var(--card-bg);
+            padding: 2.5rem 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 420px;
+            transition: background-color 0.3s ease;
+        }
+
+        h2 {
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .input-group label {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-main);
+            width: 30%;
+        }
+
+        .input-group input {
+            width: 65%;
+            padding: 0.8rem 1rem;
+            background-color: var(--input-bg);
+            color: var(--text-main);
+            border: 2px solid var(--input-border);
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease, background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        
+        .target-section {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 2px dashed var(--divider-color);
+        }
+
+        .target-input:focus {
+            border-color: var(--target-color) !important;
+        }
+
+        .results-container {
+            margin-top: 1.5rem;
+            background: var(--results-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--divider-color);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .result-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .bpa-text { color: var(--bpa-color); }
+        .wpa-text { color: var(--wpa-color); }
+        .target-text { 
+            color: var(--target-color);
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--divider-color);
+        }
+        
+        .value { font-family: monospace; font-size: 1.3rem; }
+        .target-value { font-size: 1.1rem; text-align: right;}
+
+        .clear-btn {
+            width: 100%;
+            padding: 0.8rem;
+            margin-top: 1.5rem;
+            background-color: var(--input-bg);
+            color: var(--text-main);
+            border: 2px solid var(--input-border);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .clear-btn:hover {
+            background-color: var(--btn-hover);
+            border-color: var(--text-muted);
+        }
+
+        .clear-btn:active {
+            transform: translateY(1px);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="calculator-card">
+        <h2>WCA Average Tracker</h2>
+        <p class="subtitle">Enter your first 4 solves (Type 'D' for DNF)</p>
+
+        <div class="input-group">
+            <label for="solve1">Solve 1</label>
+            <input type="text" id="solve1" class="time-input" placeholder="e.g. 1234 -> 12.34" autocomplete="off">
+        </div>
+        <div class="input-group">
+            <label for="solve2">Solve 2</label>
+            <input type="text" id="solve2" class="time-input" placeholder="e.g. 75 -> 0.75" autocomplete="off">
+        </div>
+        <div class="input-group">
+            <label for="solve3">Solve 3</label>
+            <input type="text" id="solve3" class="time-input" placeholder="e.g. 11243 -> 1:12.43" autocomplete="off">
+        </div>
+        <div class="input-group">
+            <label for="solve4">Solve 4</label>
+            <input type="text" id="solve4" class="time-input" placeholder="e.g. DNF" autocomplete="off">
+        </div>
+
+        <div class="target-section">
+            <div class="input-group">
+                <label for="target" style="color: var(--target-color);">Target Avg</label>
+                <input type="text" id="target" class="time-input target-input" placeholder="Optional Goal" autocomplete="off">
+            </div>
+        </div>
+
+        <div class="results-container">
+            <div class="result-row bpa-text">
+                <span>Best Possible (BPA):</span>
+                <span id="bpa-result" class="value">--</span>
+            </div>
+            <div class="result-row wpa-text">
+                <span>Worst Possible (WPA):</span>
+                <span id="wpa-result" class="value">--</span>
+            </div>
+            <div class="result-row target-text">
+                <span>Required 5th Solve:</span>
+                <span id="required-result" class="value target-value">--</span>
+            </div>
+        </div>
+
+        <button id="clear-btn" class="clear-btn">Clear All</button>
+    </div>
+
+    <script>
+        const inputs = document.querySelectorAll('.time-input:not(#target)');
+        const targetInput = document.getElementById('target');
+        const bpaDisplay = document.getElementById('bpa-result');
+        const wpaDisplay = document.getElementById('wpa-result');
+        const reqDisplay = document.getElementById('required-result');
+        const clearBtn = document.getElementById('clear-btn');
+
+        function parseTime(val) {
+            val = val.trim().toUpperCase();
+            if (val === 'DNF') return Infinity;
+            if (val === '') return null;
+            
+            // If the user explicitly typed a dot or colon, respect it
+            if (val.includes(':') || val.includes('.')) {
+                if (val.includes(':')) {
+                    const parts = val.split(':');
+                    return parseFloat(parts[0]) * 60 + parseFloat(parts[1]);
+                }
+                return parseFloat(val);
+            }
+            
+            // Smart integer parsing (csTimer style)
+            if (/^\d+$/.test(val)) {
+                const len = val.length;
+                if (len <= 2) {
+                    return parseInt(val) / 100; // e.g. 75 -> 0.75
+                } else if (len <= 4) {
+                    const cs = parseInt(val.slice(-2));
+                    const s = parseInt(val.slice(0, -2));
+                    return s + (cs / 100); // e.g. 4357 -> 43.57
+                } else {
+                    const cs = parseInt(val.slice(-2));
+                    const s = parseInt(val.slice(-4, -2));
+                    const m = parseInt(val.slice(0, -4));
+                    return (m * 60) + s + (cs / 100); // e.g. 11243 -> 1:12.43
+                }
+            }
+
+            const num = parseFloat(val);
+            return isNaN(num) ? null : num;
+        }
+
+        function formatTime(time) {
+            if (time === Infinity) return 'DNF';
+            
+            if (time >= 60) {
+                const mins = Math.floor(time / 60);
+                const secs = (time % 60).toFixed(2);
+                return `${mins}:${secs.padStart(5, '0')}`;
+            }
+            return time.toFixed(2);
+        }
+
+        function calculateAverages() {
+            let times = [];
+            let dnfCount = 0;
+
+            for (let input of inputs) {
+                const val = parseTime(input.value);
+                if (val === null) {
+                    bpaDisplay.textContent = '--';
+                    wpaDisplay.textContent = '--';
+                    reqDisplay.textContent = '--';
+                    return; 
+                }
+                times.push(val);
+                if (val === Infinity) dnfCount++;
+            }
+
+            if (dnfCount >= 2) {
+                bpaDisplay.textContent = 'DNF';
+                wpaDisplay.textContent = 'DNF';
+                reqDisplay.textContent = 'Average is DNF';
+                return;
+            }
+
+            times.sort((a, b) => a - b);
+            const [t1, t2, t3, t4] = times;
+
+            const bpa = (t1 + t2 + t3) / 3;
+            const wpa = (t2 + t3 + t4) / 3;
+
+            bpaDisplay.textContent = formatTime(bpa);
+            wpaDisplay.textContent = formatTime(wpa);
+
+            // Target Calculation Logic
+            const targetVal = parseTime(targetInput.value);
+            if (targetVal !== null && targetVal !== Infinity) {
+                const requiredSum = targetVal * 3;
+                const requiredSolve = requiredSum - t2 - t3;
+
+                const roundedTarget = Math.round(targetVal * 100) / 100;
+                const roundedBPA = Math.round(bpa * 100) / 100;
+                const roundedWPA = Math.round(wpa * 100) / 100;
+
+                if (roundedTarget < roundedBPA) {
+                    reqDisplay.textContent = "Impossible";
+                } else if (roundedTarget >= roundedWPA) {
+                    reqDisplay.textContent = "Guaranteed (Can DNF)";
+                } else {
+                    if (roundedTarget === roundedBPA) {
+                        reqDisplay.textContent = `≤ ${formatTime(t1)}`;
+                    } else {
+                        reqDisplay.textContent = formatTime(requiredSolve);
+                    }
+                }
+            } else {
+                reqDisplay.textContent = '--';
+            }
+        }
+
+        function handleInput(e) {
+            // Auto-fill DNF if the user types just 'D' or 'd'
+            if (e.target.value.trim().toUpperCase() === 'D') {
+                e.target.value = 'DNF';
+            }
+            calculateAverages();
+        }
+
+        function formatInputOnBlur(e) {
+            const val = parseTime(e.target.value);
+            if (val !== null) {
+                e.target.value = formatTime(val);
+            }
+        }
+
+        // Attach updated event listeners
+        inputs.forEach(input => {
+            input.addEventListener('input', handleInput);
+            input.addEventListener('blur', formatInputOnBlur);
+        });
+        targetInput.addEventListener('input', handleInput);
+        targetInput.addEventListener('blur', formatInputOnBlur);
+
+        clearBtn.addEventListener('click', () => {
+            document.querySelectorAll('.time-input').forEach(input => input.value = '');
+            calculateAverages();
+            document.getElementById('solve1').focus();
+        });
+    </script>
+</body>
+</html>
